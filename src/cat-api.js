@@ -8,12 +8,11 @@ export function fetchBreeds() {
       'x-api-key': API_KEY
     }
   })
-    .then(response => response.json())
-    .then(data => {
-      return data.map(breed => ({
-        id: breed.id,
-        name: breed.name
-      }));
+  .then(response => {
+      if (!response.ok) {
+        throw new Error(response.status);
+      }
+      return response.json();
     });
 }
 
@@ -25,19 +24,11 @@ export function fetchCatByBreed(breedId) {
       'x-api-key': API_KEY
     }
   })
-    .then(response => response.json())
-    .then(data => {
-      if (data.length > 0) {
-        const catData = data[0];
-        const breed = catData.breeds[0];
-        return {
-          name: breed.name,
-          description: breed.description,
-          temperament: breed.temperament,
-          imageUrl: catData.url
-        };
-      } else {
-        throw new Error('No cat found for the given breed ID');
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(response.status);
       }
-    });
+      return response.json();
+    })
+
 }

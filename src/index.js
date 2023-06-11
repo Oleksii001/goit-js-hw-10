@@ -1,6 +1,7 @@
 import './index.css';
 import { fetchBreeds, fetchCatByBreed } from './cat-api.js';
 import Notiflix from 'notiflix';
+import SlimSelect from 'slim-select'
 
 const breedSelect = document.querySelector('.breed-select');
 const catInfoDiv = document.querySelector('.cat-info');
@@ -11,24 +12,35 @@ const breedTemperament = document.querySelector('.breed-temperament');
 const loader = document.querySelector('.loader');
 const error = document.querySelector('.error');
 
+breedSelect.style.display = 'none';
+catInfoDiv.style.display = 'none';
+error.style.display = 'none';
 
 fetchBreeds()
   .then(breeds => {
-    breeds.forEach(breed => {
-      const option = document.createElement('option');
-      option.value = breed.id;
-      option.textContent = breed.name;
-      breedSelect.appendChild(option);
-    });
+    if (breeds.length > 0) {
+      const options = breeds.map(breed => {
+        const option = document.createElement('option');
+        option.value = breed.id;
+        option.textContent = breed.name;
+        return option;
+      });
+
+      breedSelect.append(...options);
+    } else {
+      throw new Error('No breeds found');
+    }
+    new SlimSelect({
+  select: '#breedSelect'
+})
   })
   .catch(() => {
     Notiflix.Notify.failure('Oops', 'Something went wrong, try reloading the page', 'Ok');
-    error.style.display = 'none';
+    error.style.display = 'block'; 
   })
   .finally(() => {
     loader.style.display = 'none';
     breedSelect.style.display = 'block';
-
   });
 
 breedSelect.addEventListener('change', () => {
@@ -39,21 +51,28 @@ breedSelect.addEventListener('change', () => {
   error.style.display = 'none';
 
   fetchCatByBreed(selectedBreedId)
-    .then(catData => {
-      catImage.src = catData.imageUrl;
-      breedName.textContent = `${catData.name}`;
-      breedDescription.textContent = `${catData.description}`;
-      breedTemperament.textContent = `Temperament: ${catData.temperament}`;
+    .then(data => {
+      if (data.length > 0) {
+        const catData = data[0];
+        const breed = catData.breeds[0];
 
-      catInfoDiv.style.display = 'flex';
+        catImage.src = catData.url;
+        breedName.textContent = breed.name;
+        breedDescription.textContent = breed.description;
+        breedTemperament.textContent = `Temperament: ${breed.temperament}`;
+
+        catInfoDiv.style.display = 'flex';
+      } else {
+        throw new Error('No cat found for the given breed ID');
+      }
     })
     .catch(() => {
       Notiflix.Notify.failure('Oops', 'Something went wrong, try reloading the page.', 'Ok');
-      error.style.display = 'none';
-
+      error.style.display = 'block'; 
     })
     .finally(() => {
       loader.style.display = 'none';
-
     });
 });
+
+
